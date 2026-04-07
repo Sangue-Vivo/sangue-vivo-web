@@ -1,0 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-display: 'Plus Jakarta Sans', sans-serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
+
+  --color-primary: #DC2626;
+  --color-primary-dark: #991B1B;
+  --color-primary-light: #FEE2E2;
+  --color-coral: #F97066;
+  --color-rose: #FDA4AF;
+  --color-warm: #FFF7ED;
+  --color-dark: #1C1917;
+  --color-gray-700: #44403C;
+  --color-gray-400: #A8A29E;
+  --color-gray-200: #E7E5E4;
+  --color-gray-100: #F5F5F4;
+  --color-success: #16A34A;
+  --color-warning: #F59E0B;
+  --color-danger: #DC2626;
+  --color-info: #2563EB;
+  --color-rank-gota: #93C5FD;
+  --color-rank-doador: #EF4444;
+  --color-rank-amigo: #F97316;
+  --color-rank-guardiao: #F59E0B;
+  --color-rank-salvador: #DC2626;
+  --color-rank-lenda: #8B5CF6;
+  --color-rank-heroi: #B91C1C;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@keyframes wave-drift {
+  0% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-25%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.animate-wave {
+  animation: wave-drift 8s ease-in-out infinite;
+}
+
+.animate-wave-slow {
+  animation: wave-drift 12s ease-in-out infinite;
+}
