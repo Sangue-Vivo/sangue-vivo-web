@@ -55,6 +55,10 @@ coverage
 .vite
 *.tsbuildinfo
 
+# Claude Code
+.claude/
+CLAUDE.md
+
 # Misc
 *.pem
 *.p12
