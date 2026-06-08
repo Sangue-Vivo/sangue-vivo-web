@@ -6,7 +6,7 @@ const api = axios.create({
     'Content-Type': 'application/json',
     'X-Requested-With': 'XMLHttpRequest',
   },
-  timeout: 10000,
+  timeout: 60000,
 })
 
 api.interceptors.request.use(
@@ -25,9 +25,15 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const url: string = error.config?.url || ''
+    const isAuthRoute = url.includes('/auth/login') || url.includes('/auth/register')
+    // Sessão expirada durante uso normal: limpa e manda pro login.
+    // Falha de login/registro (também 401/400) NÃO deve redirecionar — a tela exibe o erro.
+    if (error.response?.status === 401 && !isAuthRoute) {
       localStorage.removeItem('sangue-vivo-token')
-      window.location.href = '/login'
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(error)
   },

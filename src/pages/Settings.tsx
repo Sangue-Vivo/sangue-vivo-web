@@ -20,6 +20,8 @@ import Button from '../components/ui/Button';
 import PageContainer from '../components/layout/PageContainer';
 import { useAuth } from '../hooks/useAuth';
 import { useAuthStore } from '../stores/authStore';
+import api from '../services/api';
+import { mapUser, apiErrorMessage } from '../services/mappers';
 
 const profileSchema = z.object({
   name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
@@ -33,7 +35,12 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 const passwordSchema = z
   .object({
     currentPassword: z.string().min(1, 'Senha atual é obrigatória'),
-    newPassword: z.string().min(6, 'Nova senha deve ter pelo menos 6 caracteres'),
+    newPassword: z
+      .string()
+      .min(8, 'Nova senha deve ter pelo menos 8 caracteres')
+      .regex(/[A-Z]/, 'Deve conter pelo menos uma letra maiúscula')
+      .regex(/[0-9]/, 'Deve conter pelo menos um número')
+      .regex(/[^a-zA-Z0-9]/, 'Deve conter pelo menos um caractere especial'),
     confirmPassword: z.string().min(1, 'Confirme a nova senha'),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
@@ -58,12 +65,15 @@ const universities = [
 
 export default function Settings() {
   const navigate = useNavigate();
-  const { user, logout, updateProfile } = useAuth();
+  const { user, logout } = useAuth();
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
+  const [profileError, setProfileError] = useState('');
+  const [profileSaving, setProfileSaving] = useState(false);
   const [passwordSaved, setPasswordSaved] = useState(false);
   const [passwordError, setPasswordError] = useState('');
+  const [passwordSaving, setPasswordSaving] = useState(false);
 
   const [notifications, setNotifications] = useState({
     eligibleToDonate: true,
@@ -95,31 +105,37 @@ export default function Settings() {
     resolver: zodResolver(passwordSchema),
   });
 
-  const onProfileSubmit = (data: ProfileFormData) => {
-    updateProfile(data);
-    setProfileSaved(true);
-    setTimeout(() => setProfileSaved(false), 3000);
+  const onProfileSubmit = async (data: ProfileFormData) => {
+    setProfileError('');
+    setProfileSaving(true);
+    try {
+      const res = await api.put('/users/profile', data);
+      useAuthStore.getState().setUser(mapUser(res.data.data.user));
+      setProfileSaved(true);
+      setTimeout(() => setProfileSaved(false), 3000);
+    } catch (err) {
+      setProfileError(apiErrorMessage(err, 'Não foi possível salvar o perfil.'));
+    } finally {
+      setProfileSaving(false);
+    }
   };
 
-  const onPasswordSubmit = (data: PasswordFormData) => {
+  const onPasswordSubmit = async (data: PasswordFormData) => {
     setPasswordError('');
-    const registeredUsers = useAuthStore.getState().registeredUsers;
-    const storedUser = registeredUsers.find((u) => u.user.email === user?.email);
-
-    if (!storedUser || storedUser.password !== data.currentPassword) {
-      setPasswordError('Senha atual incorreta.');
-      return;
+    setPasswordSaving(true);
+    try {
+      await api.put('/users/password', {
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+      });
+      setPasswordSaved(true);
+      resetPassword();
+      setTimeout(() => setPasswordSaved(false), 3000);
+    } catch (err) {
+      setPasswordError(apiErrorMessage(err, 'Não foi possível alterar a senha.'));
+    } finally {
+      setPasswordSaving(false);
     }
-
-    // Update the password in the store
-    const updatedUsers = registeredUsers.map((u) =>
-      u.user.email === user?.email ? { ...u, password: data.newPassword } : u
-    );
-    useAuthStore.setState({ registeredUsers: updatedUsers });
-
-    setPasswordSaved(true);
-    resetPassword();
-    setTimeout(() => setPasswordSaved(false), 3000);
   };
 
   const handleLogout = () => {
@@ -150,6 +166,15 @@ export default function Settings() {
               <h2 className="text-lg font-bold text-dark">Dados do perfil</h2>
             </div>
             <form onSubmit={handleProfileSubmit(onProfileSubmit)} className="flex flex-col gap-4">
+              {profileError && (
+                <motion.div
+                  className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  {profileError}
+                </motion.div>
+              )}
               <Input
                 label="Nome completo"
                 error={profileErrors.name?.message}
@@ -173,7 +198,7 @@ export default function Settings() {
                 {...registerProfile('course')}
               />
               <div className="flex items-center gap-3">
-                <Button type="submit" leftIcon={<Save className="w-4 h-4" />}>
+                <Button type="submit" isLoading={profileSaving} leftIcon={<Save className="w-4 h-4" />}>
                   Salvar alterações
                 </Button>
                 {profileSaved && (
@@ -284,7 +309,7 @@ export default function Settings() {
                 {...registerPassword('confirmPassword')}
               />
               <div className="flex items-center gap-3">
-                <Button type="submit" leftIcon={<Lock className="w-4 h-4" />}>
+                <Button type="submit" isLoading={passwordSaving} leftIcon={<Lock className="w-4 h-4" />}>
                   Alterar senha
                 </Button>
                 {passwordSaved && (

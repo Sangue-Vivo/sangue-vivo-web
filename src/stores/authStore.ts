@@ -2,195 +2,102 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { User } from '../types'
 import { BloodType, Gender } from '../types'
-import { mockCurrentUser } from '../mocks/users'
+import api from '../services/api'
+import { mapUser, apiErrorMessage } from '../services/mappers'
+
+const TOKEN_KEY = 'sangue-vivo-token'
 
 export interface RegisterData {
   name: string
   email: string
   cpf: string
   password: string
-  bloodType: BloodType
+  bloodType?: BloodType
   gender: Gender
   birthDate: string
   university: string
   course: string
 }
 
-interface StoredUser {
-  user: User
-  password: string
-}
-
 interface AuthState {
   user: User | null
   isAuthenticated: boolean
   isLoading: boolean
-  registeredUsers: StoredUser[]
-  loginAttempts: number
-  lastAttemptTime: number | null
   register: (data: RegisterData) => Promise<void>
   login: (email: string, password: string) => Promise<void>
   logout: () => void
+  checkAuth: () => Promise<void>
   updateProfile: (data: Partial<User>) => void
+  setUser: (user: User) => void
 }
-
-const mockAdminUser: User = {
-  id: 'admin-1',
-  email: 'admin@hemoal.gov.br',
-  name: 'Administrador Hemoal',
-  cpf: '000.000.000-00',
-  phone: '(82) 3315-2102',
-  birthDate: new Date('1985-01-01'),
-  gender: Gender.MALE,
-  bloodType: BloodType.O_NEGATIVE,
-  university: '',
-  course: '',
-  semester: 0,
-  avatarUrl: null,
-  role: 'admin',
-  potentialLivesSaved: 0,
-  lastDonationDate: null,
-  nextEligibleDate: null,
-  isEligible: false,
-  consecutiveStreak: 0,
-  createdAt: new Date('2024-01-01'),
-  updatedAt: new Date(),
-}
-
-const mockAdminMarcelo: User = {
-  id: 'admin-2',
-  email: 'marcelo@umj.edu.br',
-  name: 'Marcelo Lucas de Oliveira Lima',
-  cpf: '111.111.111-11',
-  phone: '(82) 99999-0000',
-  birthDate: new Date('2000-01-01'),
-  gender: Gender.MALE,
-  bloodType: BloodType.O_POSITIVE,
-  university: 'UMJ — Universidade Mário Pontes Jucá',
-  course: '',
-  semester: 0,
-  avatarUrl: null,
-  role: 'admin',
-  potentialLivesSaved: 0,
-  lastDonationDate: null,
-  nextEligibleDate: null,
-  isEligible: false,
-  consecutiveStreak: 0,
-  createdAt: new Date('2024-01-01'),
-  updatedAt: new Date(),
-}
-
-const initialUsers: StoredUser[] = [
-  { user: mockCurrentUser, password: '123456' },
-  { user: mockAdminUser, password: 'admin123' },
-  { user: mockAdminMarcelo, password: 'admin123' },
-]
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       user: null,
       isAuthenticated: false,
       isLoading: false,
-      registeredUsers: initialUsers,
-      loginAttempts: 0,
-      lastAttemptTime: null,
 
       register: async (data: RegisterData) => {
+        if (!data.bloodType) {
+          throw new Error(
+            'Selecione seu tipo sanguíneo para concluir o cadastro. Você pode descobri-lo no hemocentro mais próximo.'
+          )
+        }
         set({ isLoading: true })
-        await new Promise((resolve) => setTimeout(resolve, 600))
-
-        const { registeredUsers } = get()
-
-        if (registeredUsers.some((u) => u.user.email === data.email)) {
+        try {
+          const res = await api.post('/auth/register', {
+            name: data.name,
+            email: data.email,
+            cpf: data.cpf,
+            password: data.password,
+            bloodType: data.bloodType,
+            gender: data.gender,
+            birthDate: data.birthDate,
+            university: data.university,
+            course: data.course,
+          })
+          const { token, user } = res.data.data
+          localStorage.setItem(TOKEN_KEY, token)
+          set({ user: mapUser(user), isAuthenticated: true, isLoading: false })
+        } catch (err) {
           set({ isLoading: false })
-          throw new Error('Já existe uma conta com este e-mail.')
+          throw new Error(apiErrorMessage(err, 'Não foi possível criar a conta. Verifique os dados.'))
         }
-
-        if (registeredUsers.some((u) => u.user.cpf === data.cpf)) {
-          set({ isLoading: false })
-          throw new Error('Já existe uma conta com este CPF.')
-        }
-
-        const newUser: User = {
-          id: String(registeredUsers.length + 1),
-          email: data.email,
-          name: data.name,
-          cpf: data.cpf,
-          phone: '',
-          birthDate: new Date(data.birthDate),
-          gender: data.gender,
-          bloodType: data.bloodType,
-          university: data.university,
-          course: data.course,
-          semester: 1,
-          avatarUrl: null,
-          role: 'user',
-          potentialLivesSaved: 0,
-          lastDonationDate: null,
-          nextEligibleDate: null,
-          isEligible: true,
-          consecutiveStreak: 0,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }
-
-        set({
-          registeredUsers: [...registeredUsers, { user: newUser, password: data.password }],
-          user: newUser,
-          isAuthenticated: true,
-          isLoading: false,
-        })
       },
 
       login: async (email: string, password: string) => {
-        const { loginAttempts, lastAttemptTime } = get()
-        const now = Date.now()
-        const fifteenMinutes = 15 * 60 * 1000
-
-        // Rate limit: block after 5 failed attempts within 15 minutes
-        if (loginAttempts >= 5 && lastAttemptTime && (now - lastAttemptTime) < fifteenMinutes) {
-          throw new Error('Muitas tentativas. Tente novamente em 15 minutos.')
-        }
-
-        // Reset attempts if 15 minutes have passed
-        if (lastAttemptTime && (now - lastAttemptTime) >= fifteenMinutes) {
-          set({ loginAttempts: 0, lastAttemptTime: null })
-        }
-
         set({ isLoading: true })
-        await new Promise((resolve) => setTimeout(resolve, 800))
-
-        const { registeredUsers } = get()
-        const found = registeredUsers.find(
-          (u) => u.user.email === email && u.password === password
-        )
-
-        if (found) {
-          set({
-            user: found.user,
-            isAuthenticated: true,
-            isLoading: false,
-            loginAttempts: 0,
-            lastAttemptTime: null,
-          })
-        } else {
-          set({
-            isLoading: false,
-            loginAttempts: get().loginAttempts + 1,
-            lastAttemptTime: now,
-          })
-          throw new Error('Credenciais inválidas. Verifique seu e-mail e senha.')
+        try {
+          const res = await api.post('/auth/login', { email, password })
+          const { token, user } = res.data.data
+          localStorage.setItem(TOKEN_KEY, token)
+          set({ user: mapUser(user), isAuthenticated: true, isLoading: false })
+        } catch (err) {
+          set({ isLoading: false })
+          throw new Error(apiErrorMessage(err, 'Credenciais inválidas. Verifique seu e-mail e senha.'))
         }
       },
 
       logout: () => {
-        localStorage.removeItem('sangue-vivo-token')
-        set({
-          user: null,
-          isAuthenticated: false,
-          isLoading: false,
-        })
+        localStorage.removeItem(TOKEN_KEY)
+        set({ user: null, isAuthenticated: false, isLoading: false })
+      },
+
+      // Valida o token no carregamento do app: hidrata o usuário ou limpa sessão inválida.
+      checkAuth: async () => {
+        const token = localStorage.getItem(TOKEN_KEY)
+        if (!token) {
+          set({ user: null, isAuthenticated: false })
+          return
+        }
+        try {
+          const res = await api.get('/auth/me')
+          set({ user: mapUser(res.data.data.user), isAuthenticated: true })
+        } catch {
+          localStorage.removeItem(TOKEN_KEY)
+          set({ user: null, isAuthenticated: false })
+        }
       },
 
       updateProfile: (data: Partial<User>) => {
@@ -198,26 +105,15 @@ export const useAuthStore = create<AuthState>()(
           user: state.user ? { ...state.user, ...data, updatedAt: new Date() } : null,
         }))
       },
+
+      setUser: (user: User) => set({ user }),
     }),
     {
       name: 'sangue-vivo-auth',
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
-        registeredUsers: state.registeredUsers,
       }),
-      merge: (persisted, current) => {
-        const p = persisted as Partial<AuthState> | undefined;
-        const persistedUsers = p?.registeredUsers ?? [];
-        // Merge: keep initialUsers + any user-registered accounts not in initialUsers
-        const initialEmails = new Set(initialUsers.map((u) => u.user.email));
-        const extraUsers = persistedUsers.filter((u) => !initialEmails.has(u.user.email));
-        return {
-          ...current,
-          ...p,
-          registeredUsers: [...initialUsers, ...extraUsers],
-        };
-      },
     }
   )
 )
