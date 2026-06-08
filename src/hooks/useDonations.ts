@@ -1,75 +1,69 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { DonationStatus } from '../types'
 import type { Donation } from '../types'
-import { mockDonations } from '../mocks/donations'
-import { mockCurrentUser } from '../mocks/users'
+import api from '../services/api'
+import { mapDonation } from '../services/mappers'
 
 export function useDonations() {
-  const [donations, setDonations] = useState<Donation[]>(mockDonations)
+  const [donations, setDonations] = useState<Donation[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const fetchDonations = useCallback(async () => {
+    try {
+      const res = await api.get('/donations', { params: { limit: 100 } })
+      setDonations((res.data.data.donations as unknown[]).map((d) => mapDonation(d as never)))
+    } catch {
+      setDonations([])
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchDonations()
+  }, [fetchDonations])
 
   const stats = useMemo(() => {
-    const completed = donations.filter(
-      (d) => d.status === DonationStatus.COMPLETED,
-    )
-    const scheduled = donations.filter(
-      (d) => d.status === DonationStatus.SCHEDULED,
-    )
+    const completed = donations.filter((d) => d.status === DonationStatus.COMPLETED)
+    const scheduled = donations.filter((d) => d.status === DonationStatus.SCHEDULED)
     const linkedToCause = completed.filter((d) => d.causeDonation !== null)
 
     return {
       totalCompleted: completed.length,
       totalScheduled: scheduled.length,
       donationsForCauses: linkedToCause.length,
-      // Estimate: each donation can potentially save up to 4 lives
       potentialLivesSaved: completed.length * 4,
     }
   }, [donations])
 
   const scheduleDonation = useCallback(
-    (data: { scheduledDate: Date; hospital: string; city: string; causeId?: string }) => {
-      const newDonation: Donation = {
-        id: `donation-${Date.now()}`,
-        userId: mockCurrentUser.id,
-        user: mockCurrentUser,
-        scheduledDate: data.scheduledDate,
-        completedDate: null,
-        status: DonationStatus.SCHEDULED,
+    async (data: { scheduledDate: Date; hospital: string; city: string; causeId?: string }) => {
+      const res = await api.post('/donations', {
+        scheduledDate: data.scheduledDate.toISOString(),
         hospital: data.hospital,
         city: data.city,
-        causeDonation: data.causeId
-          ? {
-              id: `cd-${Date.now()}`,
-              causeId: data.causeId,
-              cause: null as unknown as import('../types').Cause,
-              donationId: `donation-${Date.now()}`,
-              donation: null as unknown as Donation,
-              createdAt: new Date(),
-            }
-          : null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
-
-      setDonations((prev) => [...prev, newDonation])
-      return newDonation
+        causeId: data.causeId,
+      })
+      await fetchDonations()
+      return mapDonation(res.data.data.donation)
     },
-    [],
+    [fetchDonations]
   )
 
-  const cancelDonation = useCallback((donationId: string) => {
-    setDonations((prev) =>
-      prev.map((d) =>
-        d.id === donationId
-          ? { ...d, status: DonationStatus.CANCELLED, updatedAt: new Date() }
-          : d,
-      ),
-    )
-  }, [])
+  const cancelDonation = useCallback(
+    async (donationId: string) => {
+      await api.patch(`/donations/${donationId}/cancel`)
+      await fetchDonations()
+    },
+    [fetchDonations]
+  )
 
   return {
     donations,
     stats,
+    loading,
     scheduleDonation,
     cancelDonation,
+    refetch: fetchDonations,
   }
 }

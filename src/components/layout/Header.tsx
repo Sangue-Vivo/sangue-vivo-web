@@ -4,26 +4,27 @@ import { Droplets, Menu, User, LogOut, Settings, ChevronDown, Shield } from 'luc
 import NotificationBell from '../notification/NotificationBell';
 import Avatar from '../ui/Avatar';
 import { useAuth } from '../../hooks/useAuth';
-import type { Notification } from '../../types';
+import { useNotificationStore } from '../../stores/notificationStore';
 import { useState } from 'react';
 
 interface HeaderProps {
-  notifications?: Notification[];
-  onMarkAllRead?: () => void;
-  onNotificationClick?: (notification: Notification) => void;
   onToggleSidebar: () => void;
 }
 
-export default function Header({
-  notifications = [],
-  onMarkAllRead,
-  onNotificationClick,
-  onToggleSidebar,
-}: HeaderProps) {
+export default function Header({ onToggleSidebar }: HeaderProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  const notifications = useNotificationStore((s) => s.notifications);
+  const loadNotifications = useNotificationStore((s) => s.load);
+  const markAllAsRead = useNotificationStore((s) => s.markAllAsRead);
+  const markAsRead = useNotificationStore((s) => s.markAsRead);
+
+  useEffect(() => {
+    loadNotifications();
+  }, [loadNotifications]);
 
   const userName = user?.name ?? 'Usuário';
   const bloodType = user?.bloodType;
@@ -68,8 +69,8 @@ export default function Header({
           <div className="flex items-center gap-3">
             <NotificationBell
               notifications={notifications}
-              onMarkAllRead={onMarkAllRead}
-              onNotificationClick={onNotificationClick}
+              onMarkAllRead={markAllAsRead}
+              onNotificationClick={(n) => markAsRead(n.id)}
             />
 
             {/* Profile dropdown */}

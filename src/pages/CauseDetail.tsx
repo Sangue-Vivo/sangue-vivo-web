@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -20,6 +20,8 @@ import { useDonations } from '../hooks/useDonations';
 import { useAuth } from '../hooks/useAuth';
 import { formatDate } from '../utils/formatters';
 import { BLOOD_TYPE_LABELS } from '../utils/bloodTypes';
+import type { Cause } from '../types';
+import { apiErrorMessage } from '../services/mappers';
 
 function getStockLevel(urgencyLevel: number) {
   if (urgencyLevel >= 4) return { label: 'Crítico', color: 'bg-red-500', textColor: 'text-red-700', bgLight: 'bg-red-100' };
@@ -35,8 +37,32 @@ export default function CauseDetail() {
   const { scheduleDonation } = useDonations();
   const { user } = useAuth();
   const [showSchedulingModal, setShowSchedulingModal] = useState(false);
+  const [cause, setCause] = useState<Cause | null>(null);
+  const [loadingCause, setLoadingCause] = useState(true);
 
-  const cause = getCauseById(id ?? '');
+  useEffect(() => {
+    let active = true;
+    setLoadingCause(true);
+    getCauseById(id ?? '').then((c) => {
+      if (active) {
+        setCause(c);
+        setLoadingCause(false);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [id, getCauseById]);
+
+  if (loadingCause) {
+    return (
+      <PageContainer>
+        <div className="flex items-center justify-center py-20">
+          <Clock className="w-6 h-6 text-gray-300 animate-spin" />
+        </div>
+      </PageContainer>
+    );
+  }
 
   if (!cause) {
     return (
@@ -201,14 +227,18 @@ export default function CauseDetail() {
         isOpen={showSchedulingModal}
         onClose={() => setShowSchedulingModal(false)}
         cause={cause}
-        onConfirm={(data) => {
-          scheduleDonation({
-            scheduledDate: data.scheduledDate,
-            hospital: data.hospital,
-            city: data.city,
-            causeId: cause.id,
-          });
-          toast.success('Doação agendada com sucesso!');
+        onConfirm={async (data) => {
+          try {
+            await scheduleDonation({
+              scheduledDate: data.scheduledDate,
+              hospital: data.hospital,
+              city: data.city,
+              causeId: cause.id,
+            });
+            toast.success('Doação agendada com sucesso!');
+          } catch (err) {
+            toast.error(apiErrorMessage(err, 'Não foi possível agendar a doação.'));
+          }
         }}
       />
     </PageContainer>

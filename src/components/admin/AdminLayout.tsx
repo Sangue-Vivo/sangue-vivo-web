@@ -1,10 +1,16 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import AdminSidebar from './AdminSidebar'
 import AdminHeader from './AdminHeader'
+import { useAdminStore } from '../../stores/adminStore'
 
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const loadAll = useAdminStore((s) => s.loadAll)
+
+  useEffect(() => {
+    loadAll()
+  }, [loadAll])
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -1,12 +1,15 @@
 import { create } from 'zustand'
 import type { Notification } from '../types'
-import { mockNotifications } from '../mocks/notifications'
+import api from '../services/api'
+import { mapNotification } from '../services/mappers'
 
 interface NotificationState {
   notifications: Notification[]
   unreadCount: number
-  markAsRead: (id: string) => void
-  markAllAsRead: () => void
+  loading: boolean
+  load: () => Promise<void>
+  markAsRead: (id: string) => Promise<void>
+  markAllAsRead: () => Promise<void>
   addNotification: (notification: Notification) => void
 }
 
@@ -15,38 +18,51 @@ function countUnread(notifications: Notification[]): number {
 }
 
 export const useNotificationStore = create<NotificationState>((set) => ({
-  notifications: mockNotifications,
-  unreadCount: countUnread(mockNotifications),
+  notifications: [],
+  unreadCount: 0,
+  loading: false,
 
-  markAsRead: (id: string) => {
-    set((state) => {
-      const updated = state.notifications.map((n) =>
-        n.id === id ? { ...n, isRead: true } : n,
+  load: async () => {
+    set({ loading: true })
+    try {
+      const res = await api.get('/notifications', { params: { limit: 50 } })
+      const notifications = (res.data.data.notifications as unknown[]).map((n) =>
+        mapNotification(n as never)
       )
-      return {
-        notifications: updated,
-        unreadCount: countUnread(updated),
-      }
-    })
+      set({ notifications, unreadCount: countUnread(notifications), loading: false })
+    } catch {
+      set({ loading: false })
+    }
   },
 
-  markAllAsRead: () => {
+  markAsRead: async (id: string) => {
     set((state) => {
-      const updated = state.notifications.map((n) => ({ ...n, isRead: true }))
-      return {
-        notifications: updated,
-        unreadCount: 0,
-      }
+      const updated = state.notifications.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+      return { notifications: updated, unreadCount: countUnread(updated) }
     })
+    try {
+      await api.patch(`/notifications/${id}/read`)
+    } catch {
+      /* otimista — ignora falha */
+    }
+  },
+
+  markAllAsRead: async () => {
+    set((state) => ({
+      notifications: state.notifications.map((n) => ({ ...n, isRead: true })),
+      unreadCount: 0,
+    }))
+    try {
+      await api.patch('/notifications/read-all')
+    } catch {
+      /* otimista — ignora falha */
+    }
   },
 
   addNotification: (notification: Notification) => {
     set((state) => {
       const updated = [notification, ...state.notifications]
-      return {
-        notifications: updated,
-        unreadCount: countUnread(updated),
-      }
+      return { notifications: updated, unreadCount: countUnread(updated) }
     })
   },
 }))

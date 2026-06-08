@@ -70,6 +70,11 @@ export interface Cause {
   donations: CauseDonation[];
   createdAt: Date;
   updatedAt: Date;
+  // Campos vindos da API (opcionais; usados nas telas de admin)
+  patientName?: string;
+  goalDonations?: number;
+  currentDonations?: number;
+  status?: 'ACTIVE' | 'FULFILLED' | 'EXPIRED';
 }
 
 export interface Donation {

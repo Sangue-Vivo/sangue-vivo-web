@@ -1,6 +1,7 @@
-import { useMemo, useCallback } from 'react'
-import { BloodType } from '../types'
-import { mockCauses } from '../mocks/causes'
+import { useMemo, useCallback, useState, useEffect } from 'react'
+import { BloodType, type Cause } from '../types'
+import api from '../services/api'
+import { mapCause } from '../services/mappers'
 import { useAuth } from './useAuth'
 
 const bloodTypeCompatibility: Record<BloodType, BloodType[]> = {
@@ -40,28 +41,49 @@ const bloodTypeCompatibility: Record<BloodType, BloodType[]> = {
 
 export function useCauses() {
   const { user } = useAuth()
+  const [causes, setCauses] = useState<Cause[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const causes = useMemo(
-    () => mockCauses.filter((c) => c.active),
-    [],
-  )
+  const fetchCauses = useCallback(async () => {
+    try {
+      const res = await api.get('/causes', { params: { limit: 100 } })
+      setCauses((res.data.data.causes as unknown[]).map((c) => mapCause(c as never)))
+    } catch {
+      setCauses([])
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchCauses()
+  }, [fetchCauses])
+
+  const activeCauses = useMemo(() => causes.filter((c) => c.active), [causes])
 
   const compatibleCauses = useMemo(() => {
-    if (!user) return causes
+    if (!user) return activeCauses
 
     const canDonateTo = bloodTypeCompatibility[user.bloodType] || []
-    return causes.filter((cause) =>
+    return activeCauses.filter((cause) =>
       cause.bloodTypesNeeded.some((bt) => canDonateTo.includes(bt))
     )
-  }, [user, causes])
+  }, [user, activeCauses])
 
-  const getCauseById = useCallback((id: string) => {
-    return mockCauses.find((c) => c.id === id) || null
+  const getCauseById = useCallback(async (id: string): Promise<Cause | null> => {
+    try {
+      const res = await api.get(`/causes/${id}`)
+      return mapCause(res.data.data.cause)
+    } catch {
+      return null
+    }
   }, [])
 
   return {
-    causes,
+    causes: activeCauses,
     compatibleCauses,
+    loading,
     getCauseById,
+    refetch: fetchCauses,
   }
 }
