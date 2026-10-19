@@ -104,7 +104,7 @@ const universities = [
   { value: 'SEUNE', label: 'SEUNE - Faculdade de Ensino Regional Alternativa' },
   { value: 'FRM', label: 'FRM - Faculdade Raimundo Marinho' },
   { value: 'MADRE_TEREZA', label: 'Faculdade Madre Tereza' },
-  { value: 'UMJ', label: 'UMJ - Universidade Mário Pontes Jucá' },
+  { value: 'UMJ', label: 'UMJ - Centro Universitário Mário Pontes Jucá' },
   { value: 'ANHANGUERA', label: 'Anhanguera - Maceió' },
   { value: 'SAO_MARCOS', label: 'Faculdade São Marcos' },
   { value: 'OUTRO', label: 'Outra (digitar)' },

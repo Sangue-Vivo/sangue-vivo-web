@@ -60,7 +60,7 @@ const universities = [
   { value: 'Estácio de Sá', label: 'Estácio de Sá - Maceió' },
   { value: 'IFAL', label: 'IFAL - Instituto Federal de Alagoas' },
   { value: 'SEUNE', label: 'SEUNE - Faculdade de Ensino Regional Alternativa' },
-  { value: 'UMJ', label: 'UMJ - Universidade Mário Pontes Jucá' },
+  { value: 'UMJ', label: 'UMJ - Centro Universitário Mário Pontes Jucá' },
 ];
 
 export default function Settings() {
