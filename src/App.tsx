@@ -7,6 +7,7 @@ import ScrollToTop from './components/ScrollToTop'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import RegistrationClosed from './pages/RegistrationClosed'
 import Onboarding from './pages/Onboarding'
 import Dashboard from './pages/Dashboard'
 import Causes from './pages/Causes'
@@ -32,6 +33,7 @@ import Header from './components/layout/Header'
 import BottomNav from './components/layout/BottomNav'
 import SupportWidget from './components/support/SupportWidget'
 import CookieConsent from './components/ui/CookieConsent'
+import { REGISTRATION_ENABLED } from './utils/features'
 
 function ProtectedRoute() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -93,7 +95,7 @@ export default function App() {
 
         <Route element={<AuthOnlyRoute />}>
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/register" element={REGISTRATION_ENABLED ? <Register /> : <RegistrationClosed />} />
         </Route>
 
         <Route element={<ProtectedRoute />}>
