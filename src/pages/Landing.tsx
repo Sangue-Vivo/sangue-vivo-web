@@ -61,7 +61,7 @@ const steps = [
 
 const requirements = [
   'Ter entre 16 e 69 anos',
-  'Pesar mais de 50kg',
+  'Pesar 50 kg ou mais',
   'Estar em bom estado de saúde',
   'Ter dormido pelo menos 6 horas nas últimas 24h',
   'Não estar em jejum',
@@ -754,6 +754,16 @@ export default function Landing() {
                 </motion.div>
               ))}
             </div>
+            <div className="mt-8 text-center">
+              <Link to="/pre-triagem">
+                <Button variant="primary" size="lg" rightIcon={<ChevronRight className="w-5 h-5" />}>
+                  Fazer a pré-triagem
+                </Button>
+              </Link>
+              <p className="mt-3 text-sm text-gray-600">
+                Sem cadastro. Suas respostas ficam no seu navegador.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -916,7 +926,7 @@ export default function Landing() {
               </p>
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-gray-300 mb-3 uppercase tracking-wider">Plataforma</h4>
+              <h3 className="text-sm font-semibold text-gray-300 mb-3 uppercase tracking-wider">Plataforma</h3>
               <ul className="flex flex-col gap-2 text-sm text-gray-400">
                 <li><a href="#como-funciona" className="hover:text-white transition-colors">Como funciona</a></li>
                 <li><a href="#requisitos" className="hover:text-white transition-colors">Quem pode doar</a></li>
@@ -924,7 +934,7 @@ export default function Landing() {
               </ul>
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-gray-300 mb-3 uppercase tracking-wider">Institucional</h4>
+              <h3 className="text-sm font-semibold text-gray-300 mb-3 uppercase tracking-wider">Institucional</h3>
               <ul className="flex flex-col gap-2 text-sm text-gray-400">
                 <li><a href="mailto:contato@sanguevivo.al.gov.br" className="hover:text-white transition-colors">Aderir minha universidade</a></li>
                 <li><a href="#requisitos" className="hover:text-white transition-colors">Quem pode doar</a></li>
@@ -932,7 +942,7 @@ export default function Landing() {
               </ul>
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-gray-300 mb-3 uppercase tracking-wider">Hemocentros parceiros</h4>
+              <h3 className="text-sm font-semibold text-gray-300 mb-3 uppercase tracking-wider">Hemocentros parceiros</h3>
               <ul className="flex flex-col gap-2 text-sm text-gray-400">
                 <li>Hemoal Maceió</li>
                 <li>Hemoal Arapiraca</li>
@@ -940,14 +950,14 @@ export default function Landing() {
             </div>
           </div>
           <div className="border-t border-gray-800 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-gray-500 text-sm">
+            <p className="text-gray-400 text-sm">
               Feito com <motion.span
                 className="inline-block"
                 animate={{ scale: [1, 1.3, 1] }}
                 transition={{ duration: 0.8, repeat: Infinity, repeatDelay: 1.2 }}
               ><Heart className="inline w-4 h-4 text-primary" /></motion.span> em Alagoas
             </p>
-            <p className="text-gray-600 text-xs">
+            <p className="text-gray-400 text-xs">
               Sangue Vivo &copy; 2026. Todos os direitos reservados.
             </p>
           </div>

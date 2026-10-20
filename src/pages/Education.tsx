@@ -14,13 +14,13 @@ import PageContainer from '../components/layout/PageContainer';
 
 const requirements = [
   { text: 'Ter entre 16 e 69 anos', detail: 'Menores de 18 precisam de autorização dos pais.' },
-  { text: 'Pesar mais de 50kg', detail: 'Peso mínimo necessário para garantir a segurança do doador.' },
+  { text: 'Pesar 50 kg ou mais', detail: 'Peso mínimo necessário para garantir a segurança do doador.' },
   { text: 'Estar em bom estado de saúde', detail: 'Não estar com gripe, resfriado ou qualquer infecção.' },
   { text: 'Ter dormido pelo menos 6 horas nas últimas 24h', detail: 'O descanso adequado é essencial para a doação.' },
   { text: 'Não estar em jejum', detail: 'Faça uma refeição leve antes da doação. Evite alimentos gordurosos.' },
   { text: 'Não ter ingerido bebida alcoólica nas últimas 12h', detail: 'O álcool pode afetar a qualidade do sangue.' },
   { text: 'Apresentar documento de identidade com foto', detail: 'RG, CNH, passaporte ou carteira de trabalho.' },
-  { text: 'Não ter feito tatuagem nos últimos 12 meses', detail: 'Período de segurança para evitar infecções.' },
+  { text: 'Ter feito tatuagem ou piercing há pelo menos 7 dias', detail: 'O prazo é de 4 meses quando não é possível avaliar a segurança do procedimento.' },
 ];
 
 const faqItems = [
@@ -64,7 +64,7 @@ const myths = [
   },
   {
     myth: 'Quem tem tatuagem nunca pode doar',
-    reality: 'Quem tem tatuagem pode doar após 12 meses do procedimento, desde que feito em local regulamentado.',
+    reality: 'Quem tem tatuagem pode doar 7 dias após o procedimento. Quando não é possível avaliar a segurança do local, o prazo é de 4 meses.',
     isMythTrue: false,
   },
   {

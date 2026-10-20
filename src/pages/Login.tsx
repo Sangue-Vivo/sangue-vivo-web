@@ -58,7 +58,7 @@ export default function Login() {
         transition={{ duration: 0.5 }}
       >
         <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 mb-6">
+          <Link to="/" className="inline-flex items-center gap-2 mb-6" aria-label="Voltar para a página inicial">
             <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
               <Droplets className="w-7 h-7 text-white" />
             </div>
@@ -97,7 +97,9 @@ export default function Login() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="cursor-pointer"
+                  className="cursor-pointer p-1 -m-1 rounded"
+                  aria-label={showPassword ? 'Esconder senha' : 'Mostrar senha'}
+                  aria-pressed={showPassword}
                 >
                   {showPassword ? (
                     <EyeOff className="w-5 h-5" />

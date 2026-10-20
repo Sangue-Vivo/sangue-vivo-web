@@ -8,6 +8,7 @@ import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import RegistrationClosed from './pages/RegistrationClosed'
+import PreScreening from './pages/PreScreening'
 import Onboarding from './pages/Onboarding'
 import Dashboard from './pages/Dashboard'
 import Causes from './pages/Causes'
@@ -92,6 +93,7 @@ export default function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfUse />} />
+        <Route path="/pre-triagem" element={<PreScreening />} />
 
         <Route element={<AuthOnlyRoute />}>
           <Route path="/login" element={<Login />} />

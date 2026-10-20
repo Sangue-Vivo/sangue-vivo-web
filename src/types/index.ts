@@ -31,6 +31,13 @@ export enum NotificationType {
 
 export type UserRole = 'user' | 'admin';
 
+export interface NotificationPrefs {
+  eligibleToDonate: boolean;
+  donationReminder: boolean;
+  causeMatch: boolean;
+  general: boolean;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -50,6 +57,7 @@ export interface User {
   nextEligibleDate: Date | null;
   isEligible: boolean;
   consecutiveStreak: number;
+  notificationPrefs?: NotificationPrefs;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -9,6 +9,7 @@ import {
   type Donation,
   type CauseDonation,
   type Notification,
+  type NotificationPrefs,
 } from '../types'
 
 interface ApiUser {
@@ -30,8 +31,16 @@ interface ApiUser {
   nextEligibleDate?: string | null
   isEligible?: boolean
   consecutiveStreak?: number
+  notificationPrefs?: Partial<NotificationPrefs> | null
   createdAt: string
   updatedAt: string
+}
+
+export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
+  eligibleToDonate: true,
+  donationReminder: true,
+  causeMatch: true,
+  general: false,
 }
 
 // Cada doação de sangue pode salvar até 4 vidas.
@@ -57,6 +66,7 @@ export function mapUser(u: ApiUser): User {
     nextEligibleDate: u.nextEligibleDate ? new Date(u.nextEligibleDate) : null,
     isEligible: u.isEligible ?? false,
     consecutiveStreak: u.consecutiveStreak ?? 0,
+    notificationPrefs: { ...DEFAULT_NOTIFICATION_PREFS, ...(u.notificationPrefs ?? {}) },
     createdAt: new Date(u.createdAt),
     updatedAt: new Date(u.updatedAt),
   }

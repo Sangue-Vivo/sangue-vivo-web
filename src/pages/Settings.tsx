@@ -21,7 +21,8 @@ import PageContainer from '../components/layout/PageContainer';
 import { useAuth } from '../hooks/useAuth';
 import { useAuthStore } from '../stores/authStore';
 import api from '../services/api';
-import { mapUser, apiErrorMessage } from '../services/mappers';
+import { mapUser, apiErrorMessage, DEFAULT_NOTIFICATION_PREFS } from '../services/mappers';
+import type { NotificationPrefs } from '../types';
 
 const profileSchema = z.object({
   name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
@@ -75,12 +76,8 @@ export default function Settings() {
   const [passwordError, setPasswordError] = useState('');
   const [passwordSaving, setPasswordSaving] = useState(false);
 
-  const [notifications, setNotifications] = useState({
-    eligibleToDonate: true,
-    donationReminder: true,
-    causeMatch: true,
-    general: false,
-  });
+  const notifications = user?.notificationPrefs ?? DEFAULT_NOTIFICATION_PREFS;
+  const [notificationsError, setNotificationsError] = useState('');
 
   const {
     register: registerProfile,
@@ -143,8 +140,18 @@ export default function Settings() {
     navigate('/');
   };
 
-  const toggleNotification = (key: keyof typeof notifications) => {
-    setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
+  const toggleNotification = async (key: keyof NotificationPrefs) => {
+    const { updateProfile, setUser } = useAuthStore.getState();
+    const previous = notifications;
+    updateProfile({ notificationPrefs: { ...previous, [key]: !previous[key] } });
+    setNotificationsError('');
+    try {
+      const res = await api.put('/users/notification-preferences', { [key]: !previous[key] });
+      setUser(mapUser(res.data.data.user));
+    } catch (err) {
+      updateProfile({ notificationPrefs: previous });
+      setNotificationsError(apiErrorMessage(err, 'Não foi possível salvar a preferência.'));
+    }
   };
 
   if (!user) return null;
@@ -236,6 +243,9 @@ export default function Settings() {
                   </div>
                   <button
                     type="button"
+                    role="switch"
+                    aria-checked={notifications[item.key]}
+                    aria-label={item.label}
                     onClick={() => toggleNotification(item.key)}
                     className={`
                       relative w-11 h-6 rounded-full transition-colors cursor-pointer
@@ -251,6 +261,7 @@ export default function Settings() {
                   </button>
                 </div>
               ))}
+              {notificationsError && <p className="text-sm text-red-600">{notificationsError}</p>}
             </div>
           </Card>
         </motion.div>
